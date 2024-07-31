@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User</title>
+
+    <style>
+        .container {
+            display: flex;
+            width: 100vw;
+            height: 400px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .form-box {
+            border: 1px solid lightgray;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgb(226, 226, 226);
+            text-align: center;
+        }
+
+        button {
+            border: none;
+            background: rgba(4, 146, 4, 0.884);
+            padding: 0.3rem;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            border: 1px solid green;
+        }
+
+        input {
+            border: none;
+            padding: 0.3rem;
+            border-radius: 5px;
+        }
+
+        .submit {
+            text-align: center;
+            margin: 1rem;
+        }
+
+        span {
+            color: rgb(187, 19, 19);
+        }
+    </style>
+</head>
+
+<body>
+    <div class='container'>
+        <div class='form-box'>
+            <form action='dashboard' method="POST">
+                <input type='text' name='id' placeholder="user name" required><br>
+                <%if(s==1) {%>
+                    <span>username not available</span>
+                    <%}%>
+                        <div class='submit'>
+                            <button type="submit">Submit</button>
+                        </div>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

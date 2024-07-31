@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+        integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+        crossorigin="anonymous"></script>
+    <!--     <script src='socketio.js' integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+            crossorigin="anonymous"></script> -->
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 600px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .user-box {
+            width: 200px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid lightgray;
+            border-radius: 10px;
+            background: rgb(226, 226, 226)
+        }
+
+        h2 {
+            border-bottom: 1px solid gray;
+        }
+
+        .user {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: lightgray;
+            margin: 1rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+        }
+
+        .invite {
+            background: rgba(4, 146, 4, 0.884);
+            padding: 0.2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .invite:hover {
+            border: black;
+        }
+
+        .invites {
+            width: 200px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid lightgray;
+            border-radius: 10px;
+            background: rgb(226, 226, 226);
+            margin: 1rem;
+        }
+
+        .request {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: lightgray;
+            margin: 1rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+        }
+
+        .accept_req {
+            background: rgb(209, 45, 45);
+            padding: 0.2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class=container>
+        <div class='invites'>
+            <h3>Invites</h3>
+            <div class="request">user_name
+                <button class='accept_req'>accept</button>
+            </div>
+        </div>
+        <div class='user-box'>
+            <h2>Available Players</h2>
+            <%users.forEach((socket)=> {%>
+                <div class='user'>
+                    <%=socket.handshake.headers.id%>
+                        <button class='invite' id=<%=socket.handshake.headers.id %>
+                            onclick="invite(this)">Invite</button>
+                </div>
+                <%})%>
+
+        </div>
+    </div>
+    <script>
+        const socket = io('ws://localhost:8000', {
+            extraHeaders: {
+                "id": "<%=id%>"
+            }
+        });
+        const box = document.querySelector('.user-box');
+        const invite_box = document.querySelector('.invites');
+
+        // let invite = document.querySelectorAll('.invite').forEach(button, (button) => {
+        //     console.log(button.closest().dataset.user);
+        // })    
+        socket.on('new', (u) => {
+            console.log('new');
+            let user = document.querySelector('.user').cloneNode(true);
+            user.innerHTML = `${u.id} <button class='invite' id='${u.id}' onclick="invite(this)">Invite</button>`
+            box.appendChild(user);
+            console.log('new');
+        });
+
+        socket.on('left', (id) => {
+            console.log('left');
+            console.log(typeof (id));
+            // let s = '#' + id;
+            // console.log();
+            let usr = document.getElementById(id).closest('div');
+            console.log(usr);
+            usr.remove();
+        });
+
+        socket.on('invite_req', (usr) => {
+            console.log(`${usr} invited you to play`);
+            let e = document.querySelector('.request').cloneNode(true);
+            e.innerHTML = `${usr} <button class='accept_req' onClick=accept(this) data-id=${usr}>accept</button>`;
+            invite_box.appendChild(e);
+        });
+
+        function accept(usr) {
+            console.log(usr.dataset.id)
+            socket.emit('accept', (usr.dataset.id));
+        }
+
+        function invite(player) {
+            player.disabled = true;
+            socket.emit('invite', player.id);
+        }
+    </script>
+</body>
+
+</html>
