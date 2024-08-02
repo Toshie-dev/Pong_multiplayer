@@ -83,6 +83,10 @@
             cursor: pointer;
             color: white;
         }
+
+        #hidden {
+            display: none;
+        }
     </style>
 
 </head>
@@ -91,7 +95,7 @@
     <div class=container>
         <div class='invites'>
             <h3>Invites</h3>
-            <div class="request">user_name
+            <div class="request" id='hidden'>user_name
                 <button class='accept_req'>accept</button>
             </div>
         </div>
@@ -110,7 +114,8 @@
     <script>
         const socket = io('ws://localhost:8000', {
             extraHeaders: {
-                "id": "<%=id%>"
+                "id": "<%=id%>",
+                "m": "0"
             }
         });
         const box = document.querySelector('.user-box');
@@ -137,6 +142,10 @@
             usr.remove();
         });
 
+        socket.on('init', () => {
+            window.location = 'http://localhost:8000/match?id=<%=id%>'
+        })
+
         socket.on('invite_req', (usr) => {
             console.log(`${usr} invited you to play`);
             let e = document.querySelector('.request').cloneNode(true);
@@ -147,6 +156,7 @@
         function accept(usr) {
             console.log(usr.dataset.id)
             socket.emit('accept', (usr.dataset.id));
+            window.location = `http://localhost:8000/match?id=<%=id%>`;
         }
 
         function invite(player) {

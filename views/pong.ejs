@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+        integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.10.0/p5.min.js"
+        integrity="sha512-lvddmeF7aHRJwdbJeYThWd5kWSjTrXBzCRF/jYROiHzmhMJ1dEXfGH5Q7ft0yhizXTopAETG03s5ajTflauijA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+
+<body>
+    <h2>Opponent: </h2>
+
+    <script>
+        let opponent_text = document.querySelector('h2');
+        let ballUsr = false;
+        let running = false;
+        let player;
+        let opponent;
+        let ball;
+        const socket = io('ws://localhost:8000', {
+            extraHeaders: {
+                "id": "<%=id%>",
+                "m": "1"
+            }
+        });
+
+        socket.on('l', (id) => {
+            console.log('connected');
+            let p = 0;
+            let o = 1;
+            start(p, o);
+            ballUsr = true;
+            opponent_text.innerHTML = `Opponent: ${id}`;
+        });
+
+        socket.on('r', (id) => {
+            let p = 1;
+            let o = 0;
+            start(p, o);
+            opponent_text.innerHTML = `Opponent: ${id}`;
+        });
+
+        socket.on('posS', (pos) => {
+            opponent.pos = pos;
+        });
+
+        socket.on('win', (winner) => {
+            opponent_text.innerHTML = `${winner} won`;
+            noLoop();
+        });
+
+
+        class Board {
+            constructor(p) {
+                this.x;
+                this.inc = 0;
+                this.p = p;
+
+                if (p == 0) {
+                    this.x = 0;
+                } else {
+                    this.x = 390;
+                }
+                this.pos = (height / 2) - 40;
+            }
+
+            show() {
+                fill(255);
+                rect(this.x, this.pos, 10, 80);
+            }
+
+            bound(ball) {
+                if (this.pos > 220) {
+                    this.pos = 220;
+                }
+                if (this.pos < 0) {
+                    this.pos = 0;
+                }
+            }
+
+            send() {
+                socket.emit('posG', this.pos);
+            }
+
+            update() {
+                this.pos += this.inc;
+            }
+        }
+
+        class Ball {
+            constructor() {
+                this.xvel = 0;
+                this.yvel = 0;
+                this.pos = { x: 200, y: 150 };
+            }
+
+            show() {
+                fill(255);
+                ellipse(this.pos.x, this.pos.y, 8, 8);
+            }
+
+            update() {
+                this.pos.x += this.xvel;
+                this.pos.y += this.yvel;
+            }
+
+
+            bound(b) {
+                if (this.pos.x < 0) {
+                    if (b.pos > this.pos.y || b.pos + 80 < this.pos.y) {
+                        console.log('Game Over');
+                        noLoop();
+                        opponent_text.innerHTML = 'You Won';
+                        socket.emit('over', '<%id%>');
+                    }
+                    this.xvel = 5;
+                }
+                if (this.pos.x > 400) {
+                    if (b.pos > this.pos.y || b.pos + 80 < this.pos.y) {
+                        console.log('Game Over');
+                        noLoop();
+                        opponent_text.innerHTML = 'You Won';
+                        socket.emit('over', '<%=id%>');
+                    }
+                    this.xvel = -5;
+                }
+                if (this.pos.y > 300) {
+                    this.yvel = -5;
+                }
+                if (this.pos.y < 0) {
+                    this.yvel = 5;
+                }
+            }
+        }
+
+
+        function start(p, o) {
+            running = true;
+            ball.xvel = floor(random(3, 5));
+            ball.yvel = floor(random(3, 5));
+            player = new Board(p);
+            opponent = new Board(o);
+        }
+
+
+        function setup() {
+            createCanvas(400, 300);
+            ball = new Ball();
+        }
+
+
+        socket.on('bp', (pos) => {
+            ball.pos.x = pos.x;
+            ball.pos.y = pos.y;
+        });
+
+
+        function draw() {
+            frameRate(30);
+            background(51);
+            stroke(255);
+            line(width / 2, 0, width / 2, height);
+            if (running) {
+                player.show();
+                opponent.show();
+                player.bound(ball);
+                // player.send();
+                player.update();
+            }
+
+            if (ballUsr) {
+                socket.emit('b', ball.pos);
+                ball.update();
+                ball.bound(player);
+            }
+
+            if (player) {
+                ball.show();
+                player.update();
+                player.send();
+            }
+        }
+
+        function keyPressed() {
+            if (key == 'ArrowUp') {
+                player.inc = -2;
+            }
+
+            if (key == 'ArrowDown') {
+                player.inc = 2;
+            }
+        }
+
+        function keyReleased() {
+            player.inc = 0;
+        }
+
+    </script>
+</body>
+
+</html>
